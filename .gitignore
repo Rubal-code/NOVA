@@ -1,0 +1,48 @@
+#  Environment variables (VERY IMPORTANT)
+.env
+
+#  Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+#  Virtual environment
+venv/
+env/
+ENV/
+
+#  Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+#  Logs
+*.log
+
+#  SQLite / DB files (if any)
+*.sqlite3
+*.db
+
+#  VS Code settings
+.vscode/
+
+#  OS files
+.DS_Store
+Thumbs.db
+
+#  Pytest / coverage
+.coverage
+htmlcov/
+.pytest_cache/
+
+#  Temporary files
+*.tmp
+*.swp
+
+#  Audio files (optional, if your voice module generates them)
+*.wav
+*.mp3
+
+#  Jupyter notebooks checkpoints (if you use them later)
+.ipynb_checkpoints/

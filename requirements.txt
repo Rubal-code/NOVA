@@ -1,0 +1,17 @@
+# ── Core AI ──────────────────────────────────────────────────────────────────
+groq>=0.9.0
+python-dotenv>=1.0.0
+
+# ── Speech Recognition ────────────────────────────────────────────────────────
+SpeechRecognition>=3.10.0
+pyaudio>=0.2.13          # microphone access; may need portaudio system package
+
+# ── Text-to-Speech ────────────────────────────────────────────────────────────
+gTTS>=2.5.0              # online TTS (preferred)
+pyttsx3>=2.90            # offline TTS fallback
+pygame>=2.5.0            # audio playback for gTTS (replaces playsound — more reliable)
+
+# ── Optional extras ───────────────────────────────────────────────────────────
+ pyautogui>=0.9.54      # uncomment to enable screenshot command
+ langchain>=0.2.0       # uncomment if you want LangChain chains/agents
+ langchain-groq>=0.1.0  # uncomment together with langchain above
