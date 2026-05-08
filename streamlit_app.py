@@ -39,7 +39,14 @@ def speak(text):
     with open(audio_file, "rb") as audio:
         audio_bytes = audio.read()
 
-        st.audio(audio_bytes, format="audio/mp3")
+        st.markdown(
+            f"""
+            <audio autoplay>
+            <source src="data:audio/mp3;base64,{audio_bytes.hex()}" type="audio/mp3">
+            </audio>
+            """,
+            unsafe_allow_html=True
+        )
 
     if os.path.exists(audio_file):
         os.remove(audio_file)
