@@ -1,49 +1,202 @@
-"""Futuristic Streamlit frontend for NOVA."""
-
 import streamlit as st
+from audio_recorder_streamlit import audio_recorder
+import speech_recognition as sr
+import pygame
+import os
+import asyncio
+import edge_tts
 
+# ── Your Existing Backend Imports ─────────────────────────────
 from app.brain.groq_brain import NovaBrain
 from app.commands.handler import CommandHandler
 
-st.set_page_config(page_title="NOVA • Futuristic Assistant", page_icon="🤖", layout="wide")
-
-st.markdown(
-    """
-    <style>
-    .stApp {background: radial-gradient(circle at 20% 20%, #1d2671 0%, #0f1020 35%, #090a13 100%); color: #EAEAF8;}
-    .nova-title {font-size: 2.2rem; font-weight: 700; color: #7df9ff; text-shadow: 0 0 15px #7df9ff66;}
-    .nova-sub {color: #bfc7ff; margin-bottom: 1rem;}
-    .chat-box {border: 1px solid #2f3a7a; border-radius: 14px; padding: 0.75rem; background: #11142a88;}
-    </style>
-    """,
-    unsafe_allow_html=True,
+# ── Streamlit Config ──────────────────────────────────────────
+st.set_page_config(
+    page_title="NOVA AI Assistant",
+    page_icon="🤖",
+    layout="centered"
 )
 
+# ── Initialize Audio Engine ───────────────────────────────────
+pygame.mixer.init()
+
+# ── Edge TTS Voice Function ───────────────────────────────────
+async def edge_speak(text):
+
+    filename = "nova_voice.mp3"
+
+    communicate = edge_tts.Communicate(
+        text=text,
+        voice="en-US-GuyNeural",   # Deep Male Voice
+        rate="+20%"                # Faster Speech
+    )
+
+    await communicate.save(filename)
+
+    pygame.mixer.music.load(filename)
+    pygame.mixer.music.play()
+
+    while pygame.mixer.music.get_busy():
+        await asyncio.sleep(0.1)
+
+    pygame.mixer.music.unload()
+
+    if os.path.exists(filename):
+        os.remove(filename)
+
+
+def speak(text):
+    asyncio.run(edge_speak(text))
+
+# ── Session State ─────────────────────────────────────────────
 if "brain" not in st.session_state:
     st.session_state.brain = NovaBrain()
-if "handler" not in st.session_state:
-    st.session_state.handler = CommandHandler(on_reset_memory=st.session_state.brain.reset_memory)
+
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-st.markdown("<div class='nova-title'>NOVA // FUTURE CONSOLE</div>", unsafe_allow_html=True)
-st.markdown("<div class='nova-sub'>Human-like assistant for chat, research, headlines, and task execution.</div>", unsafe_allow_html=True)
+# ── Reset Memory ──────────────────────────────────────────────
+def reset_memory():
+    st.session_state.messages = []
 
-with st.sidebar:
-    st.header("Control Panel")
-    if st.button("Clear Memory"):
-        st.session_state.brain.reset_memory()
-        st.session_state.messages = []
-        st.success("Memory cleared.")
+# ── Command Handler ───────────────────────────────────────────
+if "handler" not in st.session_state:
+    st.session_state.handler = CommandHandler(
+        on_reset_memory=reset_memory
+    )
 
-for role, content in st.session_state.messages:
+# ── Header ────────────────────────────────────────────────────
+st.markdown(
+    """
+    <h1 style='text-align:center; color:cyan;'>
+        🤖 NOVA AI Assistant
+    </h1>
+    """,
+    unsafe_allow_html=True
+)
+
+# ── Animated AI Orb ───────────────────────────────────────────
+st.markdown(
+    """
+    <div style="
+        width:150px;
+        height:150px;
+        border-radius:50%;
+        background:cyan;
+        margin:auto;
+        box-shadow:0 0 60px cyan;
+        animation:pulse 2s infinite;
+    ">
+    </div>
+
+    <style>
+    @keyframes pulse {
+        0% {
+            transform: scale(1);
+            box-shadow: 0 0 20px cyan;
+        }
+
+        50% {
+            transform: scale(1.1);
+            box-shadow: 0 0 80px cyan;
+        }
+
+        100% {
+            transform: scale(1);
+            box-shadow: 0 0 20px cyan;
+        }
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+st.markdown("---")
+
+# ── Voice Recorder ────────────────────────────────────────────
+st.markdown("## 🎤 Speak to NOVA")
+
+audio_bytes = audio_recorder()
+
+voice_text = None
+
+# ── Speech Recognition ────────────────────────────────────────
+if audio_bytes:
+
+    try:
+        audio_path = "temp_audio.wav"
+
+        with open(audio_path, "wb") as f:
+            f.write(audio_bytes)
+
+        recognizer = sr.Recognizer()
+
+        with sr.AudioFile(audio_path) as source:
+            audio_data = recognizer.record(source)
+
+        voice_text = recognizer.recognize_google(audio_data)
+
+        st.success(f"🗣 You said: {voice_text}")
+
+        os.remove(audio_path)
+
+    except Exception as e:
+        st.error(f"Speech recognition failed: {e}")
+
+
+
+# Voice gets priority
+user_prompt = voice_text 
+
+# ── Display Previous Messages ─────────────────────────────────
+for role, message in st.session_state.messages:
+
     with st.chat_message(role):
-        st.markdown(content)
+        st.markdown(message)
 
-user_prompt = st.chat_input("Ask NOVA anything (e.g., 'today headlines', 'create ppt on AI roadmap').")
+# ── Main Assistant Logic ──────────────────────────────────────
 if user_prompt:
+
+    # Save User Message
     st.session_state.messages.append(("user", user_prompt))
-    handled, command_response = st.session_state.handler.process(user_prompt)
-    reply = command_response if handled and command_response != "__EXIT__" else st.session_state.brain.chat(user_prompt)
+
+    with st.chat_message("user"):
+        st.markdown(user_prompt)
+
+    # Thinking Animation
+    with st.spinner("🧠 NOVA is thinking..."):
+
+        try:
+            # Command Handler
+            handled, command_response = (
+                st.session_state.handler.process(user_prompt)
+            )
+
+            if handled:
+
+                if command_response == "__EXIT__":
+                    reply = "Goodbye! Shutting down NOVA."
+
+                else:
+                    reply = command_response
+
+            else:
+                # AI Brain Response
+                reply = st.session_state.brain.chat(user_prompt)
+
+        except Exception as e:
+            reply = f"Error: {str(e)}"
+
+    # Save Assistant Reply
     st.session_state.messages.append(("assistant", reply))
-    st.rerun()
+
+    # Display Assistant Reply
+    with st.chat_message("assistant"):
+        st.markdown(reply)
+
+    # Speak Assistant Reply
+    speak(reply)
+
+st.markdown("---")
+
+st.caption("⚡ Powered by NOVA AI")

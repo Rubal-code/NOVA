@@ -1,21 +1,25 @@
-# ── Core AI ──────────────────────────────────────────────────────────────────
+# ── Core AI ──────────────────────────────────────────────────
 groq>=0.9.0
 python-dotenv>=1.0.0
 
-# ── Speech Recognition ────────────────────────────────────────────────────────
+# ── Speech Recognition ───────────────────────────────────────
 SpeechRecognition>=3.10.0
-pyaudio>=0.2.13          # microphone access; may need portaudio system package
+pyaudio>=0.2.13
+audio-recorder-streamlit>=0.0.10
 
-# ── Text-to-Speech ────────────────────────────────────────────────────────────
-gTTS>=2.5.0              # online TTS (preferred)
-pyttsx3>=2.90            # offline TTS fallback
-pygame>=2.5.0            # audio playback for gTTS (replaces playsound — more reliable)
+# ── Modern AI Voice (Edge TTS) ───────────────────────────────
+edge-tts>=6.1.12
+pygame>=2.5.0
 
-# ── Optional extras ───────────────────────────────────────────────────────────
- pyautogui>=0.9.54      # uncomment to enable screenshot command
- langchain>=0.2.0       # uncomment if you want LangChain chains/agents
- langchain-groq>=0.1.0  # uncomment together with langchain above
-
+# ── Streamlit ────────────────────────────────────────────────
 streamlit>=1.38.0
+
+# ── Utilities ────────────────────────────────────────────────
 feedparser>=6.0.11
 python-pptx>=1.0.2
+requests>=2.32.0
+
+# ── Optional AI / Automation ─────────────────────────────────
+pyautogui>=0.9.54
+langchain>=0.2.0
+langchain-groq>=0.1.0
