@@ -4,6 +4,7 @@ import speech_recognition as sr
 import os
 import asyncio
 import edge_tts
+import base64
 
 # ── Your Backend Imports ──────────────────────────────────────
 from app.brain.groq_brain import NovaBrain
@@ -36,17 +37,18 @@ def speak(text):
 
     audio_file = asyncio.run(generate_voice(text))
 
-    with open(audio_file, "rb") as audio:
-        audio_bytes = audio.read()
+    with open(audio_file, "rb") as f:
+        audio_bytes = f.read()
 
-        st.markdown(
-            f"""
-            <audio autoplay>
-            <source src="data:audio/mp3;base64,{audio_bytes.hex()}" type="audio/mp3">
-            </audio>
-            """,
-            unsafe_allow_html=True
-        )
+    audio_base64 = base64.b64encode(audio_bytes).decode()
+
+    audio_html = f"""
+    <audio autoplay>
+        <source src="data:audio/mp3;base64,{audio_base64}" type="audio/mp3">
+    </audio>
+    """
+
+    st.markdown(audio_html, unsafe_allow_html=True)
 
     if os.path.exists(audio_file):
         os.remove(audio_file)
