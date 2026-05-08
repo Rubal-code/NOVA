@@ -9,6 +9,7 @@ import webbrowser
 import subprocess
 import platform
 from typing import Callable
+from app.services.task_tools import TaskTools
 
 CommandResult = tuple[bool, str | None]
 
@@ -233,6 +234,28 @@ class CommandHandler:
                 "GitHub, and Instagram, search Google, tell you the time and date, take "
                 "screenshots, and have full AI conversations. Just say nova followed by your request!"
             )
+        # ── Headlines ───────────────────────────────────────────────────────
+        if _any_phrase(t, "today headlines", "today's headlines", "news headlines", "latest headlines"):
+            headlines = TaskTools.get_headlines(limit=5)
+            if not headlines:
+                return True, "I couldn't fetch headlines right now. Please try again shortly."
+            formatted = "Here are today's top headlines: " + " | ".join(headlines)
+            return True, formatted
+
+        # ── Create presentation ─────────────────────────────────────────────
+        if _any_phrase(t, "make ppt", "create ppt", "create presentation", "make presentation"):
+            topic = t
+            for rm in ("make ppt on", "create ppt on", "create presentation on", "make presentation on", "make ppt", "create ppt", "create presentation", "make presentation"):
+                topic = topic.replace(rm, "")
+            topic = topic.strip() or "AI Strategy"
+            path = TaskTools.create_ppt(topic)
+            return True, f"Done. I created your presentation on {topic}. File saved at {path}"
+
+        # ── Research helper ─────────────────────────────────────────────────
+        if _any_phrase(t, "do research on", "research on", "research this"):
+            topic = t.replace("do research on", "").replace("research on", "").replace("research this", "").strip()
+            brief = TaskTools.quick_research_brief(topic)
+            return True, brief
 
         # ── Send to AI ───────────────────────────────────────────────────────
         return False, None

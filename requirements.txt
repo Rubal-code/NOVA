@@ -15,3 +15,7 @@ pygame>=2.5.0            # audio playback for gTTS (replaces playsound — more 
  pyautogui>=0.9.54      # uncomment to enable screenshot command
  langchain>=0.2.0       # uncomment if you want LangChain chains/agents
  langchain-groq>=0.1.0  # uncomment together with langchain above
+
+streamlit>=1.38.0
+feedparser>=6.0.11
+python-pptx>=1.0.2

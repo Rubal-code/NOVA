@@ -18,8 +18,8 @@ def _greet(brain: NovaBrain) -> None:
     hour = datetime.datetime.now().hour
     period = "morning" if hour < 12 else "afternoon" if hour < 17 else "evening"
     greeting = (
-        f"Good {period}, {config.USER_NAME}! "
-        f"I'm {config.ASSISTANT_NAME}, your neural optimized voice assistant. "
+        f"I am activated, {config.USER_NAME}. "
+        f"Good {period}! I'm {config.ASSISTANT_NAME}, fully online and ready. "
         f"How can I help you today?"
     )
     display.nova_says(greeting)
@@ -57,7 +57,10 @@ def _handle_text_mode(brain: NovaBrain, commands: CommandHandler) -> None:
 
 def _handle_voice_mode(brain: NovaBrain, commands: CommandHandler) -> None:
     wake = config.WAKE_WORD.lower()
-    display.info(f"Say '{wake}' to wake me up | Say 'exit' or 'goodbye' to quit.\n")
+    if config.REQUIRE_WAKE_WORD:
+        display.info(f"Say '{wake}' to wake me up | Say 'exit' or 'goodbye' to quit.\n")
+    else:
+        display.info("Always-listening mode enabled. Say 'exit' or 'goodbye' to quit.\n")
 
     while True:
         try:
@@ -72,10 +75,9 @@ def _handle_voice_mode(brain: NovaBrain, commands: CommandHandler) -> None:
         # Use whole-word matching so "innova" doesn't trigger "nova"
         words = user_input.lower().split()
         is_exit = any(w in words for w in ("exit", "quit", "goodbye", "bye", "shutdown"))
-        has_wake = wake in words
+        has_wake = wake in words if wake else True
 
-        if not has_wake and not is_exit:
-            # Quietly ignore — not addressed to NOVA
+        if config.REQUIRE_WAKE_WORD and not has_wake and not is_exit:
             continue
 
         display.user_says(user_input)
@@ -119,10 +121,11 @@ def start_nova() -> None:
     display.divider()
 
     try:
-        import speech_recognition as sr
+        import speech_recognition as sr # noqa: F401
         import pyaudio  # noqa: F401
         _handle_voice_mode(brain, commands)
-    except ImportError:
+    except ImportError as e:
+        display.warn(f"Voice libraries not found ({e}) — switching to text mode. Otherwise install with: pip install SpeechRecognition pyaudio")
         _handle_text_mode(brain, commands)
     except Exception as e:
         display.warn(f"Microphone init failed ({e}) — switching to text mode.")

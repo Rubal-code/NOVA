@@ -22,7 +22,10 @@ def listen(prompt: bool = True) -> str | None:
         display.listening_indicator()
 
     try:
-        with sr.Microphone() as source:
+        mic_kwargs = {}
+        if config.MIC_INDEX >= 0:
+            mic_kwargs["device_index"] = config.MIC_INDEX
+        with sr.Microphone(**mic_kwargs) as source:
             # Calibrate for ambient noise every time (0.3s is quick but effective)
             _recognizer.adjust_for_ambient_noise(source, duration=0.3)
 
@@ -35,9 +38,8 @@ def listen(prompt: bool = True) -> str | None:
             except sr.WaitTimeoutError:
                 return None  # Silence — normal, just loop
 
-    except OSError:
-        # Microphone not available
-        raise
+    except OSError as e:
+        raise OSError(f"Microphone unavailable: {e}") from e
 
     try:
         text = _recognizer.recognize_google(audio, language=config.SR_LANGUAGE)

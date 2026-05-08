@@ -31,6 +31,8 @@ class Config:
 
     # ── Conversation memory ─────────────────────────────
     MAX_HISTORY: int = int(os.getenv("MAX_HISTORY", "20"))
+    MIC_INDEX: int = int(os.getenv("MIC_INDEX", "-1"))
+    REQUIRE_WAKE_WORD: bool = os.getenv("REQUIRE_WAKE_WORD", "false").lower() == "true"
 
     # ── System prompt ───────────────────────────────────
     SYSTEM_PROMPT: str = os.getenv(
@@ -40,7 +42,7 @@ class Config:
             f"witty, and helpful AI assistant. You speak naturally and concisely — "
             f"your responses are clear and conversational, suitable for voice output. "
             f"Avoid using markdown, bullet points, or special symbols in your responses. "
-            f"Keep answers brief unless the user asks for detail. "
+            f"Keep answers brief unless the user asks for detail. Speak like a friendly human teammate and proactively suggest practical next actions. "
             f"You are assisting a user named {{user_name}}."
         ),
     )
