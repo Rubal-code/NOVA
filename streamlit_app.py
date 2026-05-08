@@ -1,12 +1,11 @@
 import streamlit as st
 from audio_recorder_streamlit import audio_recorder
 import speech_recognition as sr
-import pygame
 import os
 import asyncio
 import edge_tts
 
-# ── Your Existing Backend Imports ─────────────────────────────
+# ── Your Backend Imports ──────────────────────────────────────
 from app.brain.groq_brain import NovaBrain
 from app.commands.handler import CommandHandler
 
@@ -17,11 +16,8 @@ st.set_page_config(
     layout="centered"
 )
 
-# ── Initialize Audio Engine ───────────────────────────────────
-pygame.mixer.init()
-
-# ── Edge TTS Voice Function ───────────────────────────────────
-async def edge_speak(text):
+# ── Edge TTS Voice Generation ─────────────────────────────────
+async def generate_voice(text):
 
     filename = "nova_voice.mp3"
 
@@ -33,20 +29,20 @@ async def edge_speak(text):
 
     await communicate.save(filename)
 
-    pygame.mixer.music.load(filename)
-    pygame.mixer.music.play()
-
-    while pygame.mixer.music.get_busy():
-        await asyncio.sleep(0.1)
-
-    pygame.mixer.music.unload()
-
-    if os.path.exists(filename):
-        os.remove(filename)
+    return filename
 
 
 def speak(text):
-    asyncio.run(edge_speak(text))
+
+    audio_file = asyncio.run(generate_voice(text))
+
+    with open(audio_file, "rb") as audio:
+        audio_bytes = audio.read()
+
+        st.audio(audio_bytes, format="audio/mp3")
+
+    if os.path.exists(audio_file):
+        os.remove(audio_file)
 
 # ── Session State ─────────────────────────────────────────────
 if "brain" not in st.session_state:
@@ -65,7 +61,7 @@ if "handler" not in st.session_state:
         on_reset_memory=reset_memory
     )
 
-# ── Header ────────────────────────────────────────────────────
+# ── Header UI ─────────────────────────────────────────────────
 st.markdown(
     """
     <h1 style='text-align:center; color:cyan;'>
@@ -91,6 +87,7 @@ st.markdown(
 
     <style>
     @keyframes pulse {
+
         0% {
             transform: scale(1);
             box-shadow: 0 0 20px cyan;
@@ -114,7 +111,14 @@ st.markdown(
 st.markdown("---")
 
 # ── Voice Recorder ────────────────────────────────────────────
-st.markdown("## 🎤 Speak to NOVA")
+st.markdown(
+    """
+    <h3 style='text-align:center;'>
+        🎤 Speak to NOVA
+    </h3>
+    """,
+    unsafe_allow_html=True
+)
 
 audio_bytes = audio_recorder()
 
@@ -143,10 +147,8 @@ if audio_bytes:
     except Exception as e:
         st.error(f"Speech recognition failed: {e}")
 
-
-
-# Voice gets priority
-user_prompt = voice_text 
+# ── Voice Only Mode ───────────────────────────────────────────
+user_prompt = voice_text
 
 # ── Display Previous Messages ─────────────────────────────────
 for role, message in st.session_state.messages:
@@ -167,7 +169,6 @@ if user_prompt:
     with st.spinner("🧠 NOVA is thinking..."):
 
         try:
-            # Command Handler
             handled, command_response = (
                 st.session_state.handler.process(user_prompt)
             )
@@ -181,7 +182,6 @@ if user_prompt:
                     reply = command_response
 
             else:
-                # AI Brain Response
                 reply = st.session_state.brain.chat(user_prompt)
 
         except Exception as e:
@@ -190,7 +190,7 @@ if user_prompt:
     # Save Assistant Reply
     st.session_state.messages.append(("assistant", reply))
 
-    # Display Assistant Reply
+    # Show Assistant Reply
     with st.chat_message("assistant"):
         st.markdown(reply)
 
